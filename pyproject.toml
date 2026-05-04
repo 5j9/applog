@@ -8,10 +8,8 @@ version = "0.1.1.dev1"
 authors = [{ name = '5j9', email = '5j9@users.noreply.github.com' }]
 description = 'a logger for applications, not libs'
 readme = 'README.rst'
-requires-python = '>=3.14'
-dependencies = [
-    "rich>=15.0.0",
-]
+requires-python = '>=3.9'
+dependencies = ["rich>=15.0.0"]
 license = { text = 'GPL-3.0' }
 
 [project.urls]
