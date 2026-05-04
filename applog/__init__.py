@@ -1,4 +1,4 @@
-__version__ = '0.0.1.dev0'
+__version__ = '0.1'
 import logging as _logging
 
 from rich._log_render import LogRender as _LogRender
