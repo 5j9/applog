@@ -18,6 +18,8 @@ sub_numbers = rc(r'\b(\d+(?:\.\d+)?)\b').sub
 
 
 class CustomFormatter(logging.Formatter):
+    __slots__ = ()
+
     def format(self, record):
         message = super().format(record)
 
@@ -28,9 +30,8 @@ class CustomFormatter(logging.Formatter):
         )
 
         time_str = self.formatTime(record, self.datefmt)
-        file_path = Path(record.pathname).resolve()
         line_no = record.lineno
-        url = f'file:///{file_path.as_posix()}#{line_no}'
+        url = f'{Path(record.pathname).as_uri()}#{line_no}'
         clickable_location = (
             f'\x1b]8;;{url}\x1b\\{record.funcName}\x1b]8;;\x1b\\'
         )
