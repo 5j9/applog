@@ -1,66 +1,63 @@
-__version__ = '0.1.2.dev1'
-import logging as _logging
+import logging
+import sys
+from pathlib import Path
 
-from rich._log_render import LogRender as _LogRender
-from rich.logging import RichHandler as _RichHandler
-
-# Store original method
-_original_log_render_call = _LogRender.__call__
-
-
-# workaround for https://github.com/Textualize/rich/issues/4093
-def _patched_log_render_call(
-    self,
-    console,
-    renderables,
-    log_time=None,
-    time_format=None,
-    level='',
-    path=None,
-    line_no=None,
-    link_path=None,
-):
-    """Patched version that fixes Windows file links."""
-
-    # Fix Windows paths for the link
-    if link_path:
-        # Convert backslashes to forward slashes
-        link_path = link_path.replace('\\', '/')
-        # Add the third slash (will be used in the f-string below)
-        # The original code does: f"link file://{link_path}"
-        # We need: f"link file:///{link_path}"
-        # So we prepend a slash to link_path
-        link_path = '/' + link_path
-
-    # Call original with modified link_path
-    return _original_log_render_call(
-        self,
-        console,
-        renderables,
-        log_time=log_time,
-        time_format=time_format,
-        level=level,
-        path=path,
-        line_no=line_no,
-        link_path=link_path,
-    )
+# ANSI color codes
+COLORS = {
+    'DEBUG': '\033[36m',  # Cyan
+    'INFO': '\033[32m',  # Green
+    'WARNING': '\033[33m',  # Yellow
+    'ERROR': '\033[31m',  # Red
+    'CRITICAL': '\033[35m',  # Magenta
+    'RESET': '\033[0m',
+    'GREEN': '\033[32m',  # For time stamp
+}
 
 
-_LogRender.__call__ = _patched_log_render_call  # type: ignore
+class CustomFormatter(logging.Formatter):
+    def format(self, record):
+        # Get the original message
+        message = super().format(record)
 
-# Now configure logging normally
-_logging.basicConfig(
-    format='%(message)s',
-    datefmt='[%d %X]',
-    handlers=[
-        _RichHandler(
-            rich_tracebacks=True,
-            tracebacks_show_locals=True,
+        # Format time
+        time_str = self.formatTime(record, self.datefmt)
+
+        # Create clickable link for file and line
+        file_path = Path(record.pathname).resolve()
+        line_no = record.lineno
+        url = f'file:///{file_path.as_posix()}#{line_no}'
+
+        # OSC 8 hyperlink
+        clickable_location = (
+            f'\x1b]8;;{url}\x1b\\{record.funcName}\x1b]8;;\x1b\\'
         )
-    ],
-)
 
-logger = _logging.getLogger(__name__)
-# Note: Setting level to 0 is the same as 'NOTSET' which is
-# the same as not calling setLevel at all.
+        # Apply colors
+        level_color = COLORS.get(record.levelname, COLORS['RESET'])
+        colored_level = f'{level_color}{record.levelname:8}{COLORS["RESET"]}'
+        colored_time = f'{COLORS["GREEN"]}{time_str}{COLORS["RESET"]}'
+
+        # Format the final output
+        return f'{colored_time} | {colored_level} | {clickable_location}: {level_color}{message}{COLORS["RESET"]}'
+
+
+# Configure the ROOT logger (not logger named __name__)
+root_logger = logging.getLogger()  # This gets the root logger
+
+# Remove any existing handlers
+root_logger.handlers.clear()
+
+# Create console handler
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setLevel(logging.DEBUG)
+
+# Create formatter and add to handler
+formatter = CustomFormatter(datefmt='%d %H:%M:%S')
+console_handler.setFormatter(formatter)
+
+# Add handler to root logger
+root_logger.addHandler(console_handler)
+
+
+logger = logging.getLogger(__name__)
 logger.setLevel('DEBUG')
