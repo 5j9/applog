@@ -25,8 +25,6 @@ sub_numbers = rc(r'\b(\d+(?:\.\d+)?)\b').sub
 class ColorFormatter(logging.Formatter):
     """Formatter with colors and hyperlinks"""
 
-    __slots__ = ()
-
     def format(self, record):
         message = super().format(record)
         message = sub_numbers(f'{Color.NUMBER}\\1{Color.RESET}', message)
@@ -47,8 +45,6 @@ class ColorFormatter(logging.Formatter):
 
 class PlainFormatter(logging.Formatter):
     """Plain text formatter without colors or hyperlinks"""
-
-    __slots__ = ()
 
     def format(self, record):
         message = super().format(record)
