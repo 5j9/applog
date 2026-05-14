@@ -1,18 +1,22 @@
 import logging
 import sys
+from enum import StrEnum
 from pathlib import Path
 from re import compile as rc
 
-COLORS = {
-    'DEBUG': '\033[36m',
-    'INFO': '\033[32m',
-    'WARNING': '\033[33m',
-    'ERROR': '\033[31m',
-    'CRITICAL': '\033[35m',
-    'RESET': '\033[0m',
-    'GREEN': '\033[32m',
-    'NUMBER': '\033[1;36m',  # Bold cyan for numbers
-}
+
+class Color(StrEnum):
+    """ANSI color codes for terminal output"""
+
+    DEBUG = '\033[36m'
+    INFO = '\033[32m'
+    WARNING = '\033[33m'
+    ERROR = '\033[31m'
+    CRITICAL = '\033[35m'
+    RESET = '\033[0m'
+    GREEN = '\033[32m'
+    NUMBER = '\033[1;36m'
+
 
 sub_numbers = rc(r'\b(\d+(?:\.\d+)?)\b').sub
 
@@ -25,7 +29,7 @@ class CustomFormatter(logging.Formatter):
 
         # Simple number highlighting
         message = sub_numbers(
-            f'{COLORS["NUMBER"]}\\1{COLORS["RESET"]}',
+            f'{Color.NUMBER}\\1{Color.RESET}',
             message,
         )
 
@@ -35,13 +39,15 @@ class CustomFormatter(logging.Formatter):
         clickable_location = (
             f'\x1b]8;;{url}\x1b\\{record.funcName}\x1b]8;;\x1b\\'
         )
-        level_color = COLORS.get(record.levelname, COLORS['RESET'])
-        colored_level = f'{level_color}{record.levelname:8}{COLORS["RESET"]}'
-        colored_time = f'{COLORS["GREEN"]}{time_str}{COLORS["RESET"]}'
 
-        return f'{colored_time} | {colored_level} | {clickable_location}: {message}{COLORS["RESET"]}'
+        level_color = getattr(Color, record.levelname, Color.RESET)
+        colored_level = f'{level_color}{record.levelname:8}{Color.RESET}'
+        colored_time = f'{Color.GREEN}{time_str}{Color.RESET}'
+
+        return f'{colored_time} | {colored_level} | {clickable_location}: {message}{Color.RESET}'
 
 
+# Configure logger
 root_logger = logging.getLogger()
 root_logger.handlers.clear()
 
