@@ -1,63 +1,62 @@
 import logging
 import sys
 from pathlib import Path
+from re import compile as rc
 
-# ANSI color codes
 COLORS = {
-    'DEBUG': '\033[36m',  # Cyan
-    'INFO': '\033[32m',  # Green
-    'WARNING': '\033[33m',  # Yellow
-    'ERROR': '\033[31m',  # Red
-    'CRITICAL': '\033[35m',  # Magenta
+    'DEBUG': '\033[36m',
+    'INFO': '\033[32m',
+    'WARNING': '\033[33m',
+    'ERROR': '\033[31m',
+    'CRITICAL': '\033[35m',
     'RESET': '\033[0m',
-    'GREEN': '\033[32m',  # For time stamp
+    'GREEN': '\033[32m',
+    'NUMBER': '\033[1;36m',  # Bold cyan for numbers
 }
+
+sub_numbers = rc(r'\b(\d+(?:\.\d+)?)\b').sub
 
 
 class CustomFormatter(logging.Formatter):
     def format(self, record):
-        # Get the original message
         message = super().format(record)
 
-        # Format time
-        time_str = self.formatTime(record, self.datefmt)
+        # Simple number highlighting
+        message = sub_numbers(
+            f'{COLORS["NUMBER"]}\\1{COLORS["RESET"]}',
+            message,
+        )
 
-        # Create clickable link for file and line
+        time_str = self.formatTime(record, self.datefmt)
         file_path = Path(record.pathname).resolve()
         line_no = record.lineno
         url = f'file:///{file_path.as_posix()}#{line_no}'
-
-        # OSC 8 hyperlink
         clickable_location = (
             f'\x1b]8;;{url}\x1b\\{record.funcName}\x1b]8;;\x1b\\'
         )
-
-        # Apply colors
         level_color = COLORS.get(record.levelname, COLORS['RESET'])
         colored_level = f'{level_color}{record.levelname:8}{COLORS["RESET"]}'
         colored_time = f'{COLORS["GREEN"]}{time_str}{COLORS["RESET"]}'
 
-        # Format the final output
-        return f'{colored_time} | {colored_level} | {clickable_location}: {level_color}{message}{COLORS["RESET"]}'
+        return f'{colored_time} | {colored_level} | {clickable_location}: {message}{COLORS["RESET"]}'
 
 
-# Configure the ROOT logger (not logger named __name__)
-root_logger = logging.getLogger()  # This gets the root logger
-
-# Remove any existing handlers
+root_logger = logging.getLogger()
 root_logger.handlers.clear()
 
-# Create console handler
 console_handler = logging.StreamHandler(sys.stdout)
 console_handler.setLevel(logging.DEBUG)
+console_handler.setFormatter(CustomFormatter(datefmt='%d %H:%M:%S'))
 
-# Create formatter and add to handler
-formatter = CustomFormatter(datefmt='%d %H:%M:%S')
-console_handler.setFormatter(formatter)
-
-# Add handler to root logger
 root_logger.addHandler(console_handler)
-
-
 logger = logging.getLogger(__name__)
 logger.setLevel('DEBUG')
+
+
+# Test with various message types
+if __name__ == '__main__':
+    logger.debug(f'Numbers like {42} and {3.14159} and hex {0xFF}')
+    logger.info('Strings like \'hello\' and "world"')
+    logger.warning(f"Lists: {[1, 2, 3]}, Dicts: {{'a': 1, 'b': 2}}")
+    logger.error(f'{list(range(200))}')
+    logger.critical(f'Boolean: {True}, None: {None}')
