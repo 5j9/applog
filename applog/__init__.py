@@ -1,3 +1,4 @@
+__version__ = '1.0.0.dev0'
 import logging
 import os
 import sys
