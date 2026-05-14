@@ -62,9 +62,9 @@ USE_COLORS = (
 )
 
 if USE_COLORS:
-    formatter = ColorFormatter(datefmt='%d %H:%M:%S')
+    formatter = ColorFormatter(datefmt='%a %H:%M:%S')
 else:
-    formatter = PlainFormatter(datefmt='%d %H:%M:%S')
+    formatter = PlainFormatter(datefmt='%a %H:%M:%S')
 
 
 # Configure logger
