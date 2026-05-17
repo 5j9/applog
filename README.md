@@ -153,8 +153,11 @@ module_logger.info("This will inherit parent settings")
 
 ## Notes
 
+- **For end-user applications only:** Only use this library in end-user applications. Libraries should normally only call standard `logging.getLogger(__name__)` and not mess with formatting - let the final application control the formatting.
+- **Terminal-only:** This formatter is specifically for console output.
 - The module configures the root logger on import - import it early in your application.
 - Hyperlinks use OSC 8 sequences - won't work in very old terminals
+
 
 ## Why applog?
 
